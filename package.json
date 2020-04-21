@@ -1,13 +1,13 @@
 {
-  "name": "primitiver",
+  "name": "primitive-test",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
     "serve": "node index.js"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "napeVation",
+  "license": "MIT",
   "dependencies": {
     "express": "^4.17.1",
     "primitive": "^1.0.1",
