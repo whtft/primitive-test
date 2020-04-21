@@ -1,10 +1,18 @@
-const sock = io();
 const input = document.getElementById("file");
 const output = document.getElementById("output");
+const progress = document.getElementById("progress");
+const progressbar = document.getElementById("progress-bar");
+const progressPercent = document.getElementById("progress-percent");
+
+const primus = Primus.connect("/");
 
 input.addEventListener("change", async function(){
-  let steps = 10;
+  let previousImage = output.querySelector("img");
+  if(previousImage) previousImage.remove();
+  progressbar.style["width"] = "0%";
   if(this.files[0].type.includes("image")){
+    let steps = Number(prompt("Number of steps"));
+    steps = isNaN(steps) ? 10 : steps;
     const b64 = await imageToBase64(this.files[0]);
     fetch("/primitive", {
       method: "POST",
@@ -14,19 +22,26 @@ input.addEventListener("change", async function(){
   }
 });
 
-sock.on('progress', bar=>{
-  console.log(bar);
+primus.on('data', function message(message) {
+  message.event == "step" && progressBar(message.data);
+  message.event == "result" && displayImage(message.data);
 });
-sock.on('result', data=>{
+
+const progressBar = percentage=>{
+  progress.style["opacity"] = "1";
+  progressPercent.innerText = `${Math.round(percentage)}%`;
+  progressbar.style["width"] = `${percentage}%`;
+}
+const displayImage = data=>{
   let img = new Image();
   img.onload = ()=>{
-    output.innerHTML = "";
+    progress.style["opacity"] = "0";
+    let previousImage = output.querySelector("img");
+    if(previousImage) previousImage.remove();
     output.appendChild(img);
   } 
   img.src = svgToBase64(data);
-});
-
-
+}
 const imageToBase64 = file => new Promise((resolve, reject) => {
   const reader = new FileReader();
   reader.readAsDataURL(file);

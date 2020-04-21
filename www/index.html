@@ -3,36 +3,18 @@
 
 <head>
   <title></title>
-  <style>
-    body {
-      margin: 0;
-      background: #333;
-      color: white;
-    }
-    #output {
-      width: 100vw;
-      height: 100vh;
-      position: absolute;
-      top: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    #output img{
-      max-width: 80%;
-      max-height: 80%;
-    }
-    #file {
-      position: absolute;
-      z-index: 1;
-    }
-  </style>
-  <script src="/socket.io/socket.io.js"></script>
+  <link rel="stylesheet" href="index.css">
+  <script src="/primus/primus.js"></script>
 </head>
 
 <body>
   <input id="file" type="file">
-  <div id="output"></div>
+  <div id="output">
+    <div id="progress">
+      <div id="progress-percent"></div>
+      <div id="progress-bar"></div>
+    </div>
+  </div>
   <script src="client.js"></script>
 </body>
 
