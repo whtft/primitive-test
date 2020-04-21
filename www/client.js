@@ -10,6 +10,7 @@ input.addEventListener("change", async function(){
   let previousImage = output.querySelector("img");
   if(previousImage) previousImage.remove();
   progressbar.style["width"] = "0%";
+  progressPercent.innerText = "0%";
   if(this.files[0].type.includes("image")){
     let steps = Number(prompt("Number of steps"));
     steps = isNaN(steps) ? 10 : steps;
@@ -36,8 +37,6 @@ const displayImage = data=>{
   let img = new Image();
   img.onload = ()=>{
     progress.style["opacity"] = "0";
-    let previousImage = output.querySelector("img");
-    if(previousImage) previousImage.remove();
     output.appendChild(img);
   } 
   img.src = svgToBase64(data);
