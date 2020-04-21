@@ -5,31 +5,33 @@ const Primus = require('primus')
 
 const app = express();
 const server = http.createServer(app);
-const primus = new Primus(server);
+const primus = new Primus(server, { pingInterval: false });
 
-app.use(express.json({limit:"10mb", extended: true}));
+primus.on('connection', function (spark) {
+  spark.on("data", function message(message){
+    message.event == "send" && makePrimitive(message.data, message.steps, spark);
+  })
+});
+
 app.use("/", express.static(__dirname+"/www/"));
 
-let steps, step;
-app.post("/primitive", async (req,res)=>{
-  if(!req.body.image) return res.sendStatus(400);
-  res.sendStatus(200);
-  steps = step = req.body.steps || 10;
+function makePrimitive(img, steps, spark){
+  let step = 0;
   primitive({
-    input: req.body.image,
-    numSteps: steps,
+    input: img,
+    numSteps: steps || 10,
     onStep: onStepCallback
   }).then(primed=>{
     return primed.toSVG()
   }).then(svg=>{
-    primus.write({event: "result", data: svg});
+    spark.write({event: "result", data: svg});
   });
-});
 
-const onStepCallback = ()=>{
-  step--;
-  const progress = (1 - step / steps) * 100;
-  primus.write({event: "step", data: progress});
+  function onStepCallback(){
+    step++, progress = Math.round((step / steps) * 1000) / 10;
+    if(progress % 0.5 == 0) spark.write({event: "step", data: progress});
+  }
+
 }
 
 server.listen(7777);
