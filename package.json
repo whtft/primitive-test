@@ -1,6 +1,6 @@
 {
   "name": "primitive-test",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -11,6 +11,7 @@
   "dependencies": {
     "express": "^4.17.1",
     "primitive": "^1.0.1",
-    "socket.io": "^2.3.0"
+    "primus": "^7.3.4",
+    "ws": "^7.2.3"
   }
 }
