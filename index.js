@@ -28,7 +28,7 @@ function makePrimitive(img, steps, spark){
   });
 
   function onStepCallback(){
-    step++, progress = Math.round((step / steps) * 1000) / 10;
+    let progress = Math.round((step++ / steps) * 1000) / 10;
     if(progress % 0.5 == 0) spark.write({event: "step", data: progress});
   }
 
