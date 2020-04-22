@@ -2,58 +2,71 @@ const primus = Primus.connect("/"),
 input = document.getElementById("file"),
 output = document.getElementById("images"),
 progress = document.getElementById("progress"),
+separator = document.getElementById("separator"),
 progressbar = document.getElementById("progress-bar"),
 progressPercent = document.getElementById("progress-percent");
 
-input.addEventListener("change", async function(){
-  let previousImages = output.querySelectorAll("img");
-  if(previousImages.length) previousImages.forEach(e=>e.remove());
+const loadImage = async (dt, filtered=false)=>{
+  let steps = Number(prompt("Number of steps"));
+  if(steps === false) return;
+  steps = (isNaN(steps) || steps == 0) ? 10 : steps;
+  let files = filtered || dt.files;
+  separator.style["display"] = "none";
+  output.style["opacity"] = "0";
+  output.querySelectorAll("img").forEach(e=>e.removeAttribute("src"));
   progress.style["display"] = "block";
   progressbar.style["width"] = "0%";
   progressPercent.innerText = "0%";
-  if(this.files[0].type.includes("image")){
-    let steps = Number(prompt("Number of steps"));
-    steps = isNaN(steps) ? 10 : steps;
-    const b64 = await imageToBase64(this.files[0]);
-    self.originalImg = new Image();
-    self.originalImg.className = "originalImg";
-    self.originalImg.src = b64;
-    primus.write({event:"send", data:b64, steps: steps});
+  const b64 = await imageToBase64(files[0]);
+  self.originalImg = new Image();
+  self.originalImg.className = "originalImg";
+  self.originalImg.src = b64;
+  primus.write({event:"send", data:b64, steps: steps});
+}
+
+new Droparea("#wrapper",{
+  ondrop: loadImage,
+  mime: ["image/png", "image/jpeg"],
+  validcss: {
+    border: "2px dashed #9e9e9e"
   }
 });
-output.addEventListener("mouseleave", function(){
-  let svgImg = this.querySelector(".svgImg");
-  if(svgImg) svgImg.style["clip-path"] = "";
+input.addEventListener("change", function(){
+  if(!["image/png", "image/jpeg"].includes(this.files[0].type)) return alert("Invalid file");
+  loadImage(false, this.files);
 });
+
 output.addEventListener("mousemove", function(evt){
-  let svgImg = this.querySelector(".svgImg");
+  evt.stopPropagation();
+  const svgImg = this.querySelector(".svgImg");
   if(!svgImg) return;
-  const percentOffset = Math.round(evt.offsetX / svgImg.offsetWidth * 100);
+  const percentOffset = Math.round(evt.offsetX / svgImg.offsetWidth * 1000) / 10;
   svgImg.style["clip-path"] = `polygon(0 0, ${percentOffset}% 0, ${percentOffset}% 100%, 0% 100%)`;
+  separator.style["left"] = `${percentOffset}%`;
 });
 
-primus.on('data', function message(message) {
-  message.event == "step" && progressBar(message.data);
-  message.event == "result" && displayImage(message.data);
-});
-
+const displayImage = data=>{
+  output.style["width"] = `${self.originalImg.naturalWidth}px`;
+  output.style["height"] = `${self.originalImg.naturalHeight}px`;
+  progress.style["display"] = "none";
+  separator.style["display"] = "block";
+  document.querySelector(".svgImg").src = svgToBase64(data);
+  document.querySelector(".originalImg").src = self.originalImg.src;
+  setTimeout(scale, 10);
+  setTimeout(() => { output.style["opacity"] = "1"; }, 20);
+}
 const progressBar = percentage=>{
   progressPercent.innerText = `${Math.round(percentage)}%`;
   progressbar.style["width"] = `${percentage}%`;
 }
-const displayImage = data=>{
-  let svgImg = new Image();
-  svgImg.className = "svgImg";
-  svgImg.onload = ()=>{
-    output.appendChild(self.originalImg);
-    output.appendChild(svgImg);
-    setTimeout(() => {
-      svgImg.style["opacity"] = 1;
-      self.originalImg.style["opacity"] = 1;
-    }, 100);
-    progress.style["display"] = "none";
-  } 
-  svgImg.src = svgToBase64(data);
+const scale = ()=>{
+  const image = document.querySelector("img");
+  if(!image) return;
+  const scale = Math.min( 
+    window.innerWidth / image.naturalWidth * .8, 
+    window.innerHeight / image.naturalHeight * .8
+  );
+  output.style["transform"] = `scale(${scale})`
 }
 const imageToBase64 = file => new Promise((resolve, reject) => {
   const reader = new FileReader();
@@ -62,7 +75,14 @@ const imageToBase64 = file => new Promise((resolve, reject) => {
   reader.onerror = error => reject(error);
 });
 const svgToBase64 = svg=>{
-  let svgNode = document.createRange().createContextualFragment(svg);
-  let serialized = new XMLSerializer().serializeToString(svgNode);
+  const svgNode = document.createRange().createContextualFragment(svg);
+  const serialized = new XMLSerializer().serializeToString(svgNode);
   return `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(serialized)))}`;
 }
+
+primus.on('data', function message(message) {
+  message.event == "step" && progressBar(message.data);
+  message.event == "result" && displayImage(message.data);
+});
+
+self.addEventListener("resize", scale);
