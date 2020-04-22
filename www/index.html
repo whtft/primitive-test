@@ -3,14 +3,23 @@
 
 <head>
   <title></title>
+  <link rel="stylesheet" href="opensans/OpenSans.css">
   <link rel="stylesheet" href="index.css">
   <script src="/primus/primus.js"></script>
+  <script src="dragdrop.js"></script>
 </head>
 
 <body>
-  <input id="file" type="file">
-  <div id="output">
-    <div id="images"></div>
+  <div id="input">
+    <label for="file">Load</label> or drag & drop an image...
+    <input id="file" type="file">
+  </div>
+  <div id="wrapper">
+    <div id="images">
+      <img class="originalImg" draggable="false">
+      <img class="svgImg" draggable="false">
+      <div id="separator"></div>
+    </div>
     <div id="progress">
       <div id="progress-percent"></div>
       <div id="progress-bar"></div>
